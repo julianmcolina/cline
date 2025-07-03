@@ -323,6 +323,7 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 			{task ? (
 				<TaskSection
 					task={task}
+					messages={messages}
 					apiMetrics={apiMetrics}
 					selectedModelInfo={{
 						supportsPromptCache: selectedModelInfo.supportsPromptCache,
@@ -331,6 +332,10 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 					lastApiReqTotalTokens={lastApiReqTotalTokens}
 					messageHandlers={messageHandlers}
 					scrollBehavior={scrollBehavior}
+					buttonState={{}}
+					chatState={chatState}
+					isStreaming={isStreaming}
+					modifiedMessages={modifiedMessages}
 				/>
 			) : (
 				<WelcomeSection

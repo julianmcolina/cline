@@ -35,6 +35,8 @@ type UpdateApiReqMsgParams = {
 	cacheReadTokens: number
 	totalCost?: number
 	api: ApiHandler
+	latencyMs?: number
+	ttftMs?: number
 	cancelReason?: ClineApiReqCancelReason
 	streamingFailedMessage?: string
 }
@@ -63,6 +65,8 @@ export const updateApiReqMsg = async (params: UpdateApiReqMsgParams) => {
 					params.cacheWriteTokens,
 					params.cacheReadTokens,
 				),
+			latencyMs: params.latencyMs,
+			ttftMs: params.ttftMs,
 			cancelReason: params.cancelReason,
 			streamingFailedMessage: params.streamingFailedMessage,
 		} satisfies ClineApiReqInfo),

@@ -2071,6 +2071,10 @@ export class Task {
 			let inputTokens = 0
 			let outputTokens = 0
 			let totalCost: number | undefined
+			// Add timing tracking variables
+			let requestStartTime: number | undefined
+			let firstTokenTime: number | undefined
+			let requestEndTime: number | undefined
 
 			const abortStream = async (cancelReason: ClineApiReqCancelReason, streamingFailedMessage?: string) => {
 				if (this.diffViewProvider.isEditing) {
@@ -2114,6 +2118,9 @@ export class Task {
 					cacheReadTokens,
 					totalCost,
 					api: this.api,
+					// Calculate timing for aborted requests
+					latencyMs: requestStartTime ? Date.now() - requestStartTime : undefined,
+					ttftMs: firstTokenTime && requestStartTime ? firstTokenTime - requestStartTime : undefined,
 					cancelReason,
 					streamingFailedMessage,
 				})
@@ -2149,6 +2156,10 @@ export class Task {
 			let reasoningMessage = ""
 			this.taskState.isStreaming = true
 			let didReceiveUsageChunk = false
+
+			// Start timing the request
+			requestStartTime = Date.now()
+
 			try {
 				for await (const chunk of stream) {
 					if (!chunk) {
@@ -2172,6 +2183,10 @@ export class Task {
 							}
 							break
 						case "text":
+							// Track time to first token
+							if (!firstTokenTime) {
+								firstTokenTime = Date.now()
+							}
 							if (reasoningMessage && assistantMessage.length === 0) {
 								// complete reasoning message
 								await this.say("reasoning", reasoningMessage, undefined, undefined, false)
@@ -2242,6 +2257,12 @@ export class Task {
 						cacheReadTokens += apiStreamUsage.cacheReadTokens ?? 0
 						totalCost = apiStreamUsage.totalCost
 					}
+
+					// Calculate timing for successful requests
+					requestEndTime = Date.now()
+					const latencyMs = requestStartTime ? requestEndTime - requestStartTime : undefined
+					const ttftMs = firstTokenTime && requestStartTime ? firstTokenTime - requestStartTime : undefined
+
 					await updateApiReqMsg({
 						messageStateHandler: this.messageStateHandler,
 						lastApiReqIndex,
@@ -2251,6 +2272,8 @@ export class Task {
 						cacheReadTokens,
 						api: this.api,
 						totalCost,
+						latencyMs,
+						ttftMs,
 					})
 					await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
 					await this.postStateToWebview()
@@ -2284,6 +2307,8 @@ export class Task {
 				cacheReadTokens,
 				api: this.api,
 				totalCost,
+				latencyMs: requestStartTime ? Date.now() - requestStartTime : undefined,
+				ttftMs: firstTokenTime && requestStartTime ? firstTokenTime - requestStartTime : undefined,
 			})
 			await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
 			await this.postStateToWebview()

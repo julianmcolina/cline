@@ -27,6 +27,8 @@ interface TaskHeaderProps {
 	cacheReads?: number
 	totalCost: number
 	lastApiReqTotalTokens?: number
+	latencyMs?: number
+	ttftMs?: number
 	onClose: () => void
 	onScrollToMessage?: (messageIndex: number) => void
 }
@@ -40,6 +42,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 	cacheReads,
 	totalCost,
 	lastApiReqTotalTokens,
+	latencyMs,
+	ttftMs,
 	onClose,
 	onScrollToMessage,
 }) => {
@@ -284,6 +288,16 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 								flexShrink: 0,
 							}}>
 							${totalCost?.toFixed(4)}
+							{latencyMs != null && latencyMs > 0 && (
+								<span style={{ marginLeft: 6, color: "#888", fontWeight: 400 }}>
+									· {(latencyMs / 1000).toFixed(1)}s
+									{ttftMs != null && ttftMs > 0 && (
+										<span style={{ marginLeft: 4, fontSize: "0.9em" }}>
+											(TTFT: {(ttftMs / 1000).toFixed(1)}s)
+										</span>
+									)}
+								</span>
+							)}
 						</div>
 					)}
 					<VSCodeButton

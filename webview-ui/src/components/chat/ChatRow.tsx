@@ -196,12 +196,12 @@ export const ChatRowContent = memo(
 			selectedText: "",
 		})
 		const contentRef = useRef<HTMLDivElement>(null)
-		const [cost, apiReqCancelReason, apiReqStreamingFailedMessage, retryStatus] = useMemo(() => {
+		const [cost, apiReqCancelReason, apiReqStreamingFailedMessage, retryStatus, latencyMs, ttftMs] = useMemo(() => {
 			if (message.text != null && message.say === "api_req_started") {
 				const info: ClineApiReqInfo = JSON.parse(message.text)
-				return [info.cost, info.cancelReason, info.streamingFailedMessage, info.retryStatus]
+				return [info.cost, info.cancelReason, info.streamingFailedMessage, info.retryStatus, info.latencyMs, info.ttftMs]
 			}
-			return [undefined, undefined, undefined, undefined]
+			return [undefined, undefined, undefined, undefined, undefined, undefined]
 		}, [message.text, message.say])
 
 		// when resuming task last won't be api_req_failed but a resume_task message so api_req_started will show loading spinner. that's why we just remove the last api_req_started that failed without streaming anything
@@ -937,6 +937,16 @@ export const ChatRowContent = memo(
 												opacity: cost != null && cost > 0 ? 1 : 0,
 											}}>
 											${Number(cost || 0)?.toFixed(4)}
+											{latencyMs != null && latencyMs > 0 && (
+												<span style={{ marginLeft: 6, color: "#888", fontWeight: 400 }}>
+													· {(latencyMs / 1000).toFixed(1)}s
+													{ttftMs != null && ttftMs > 0 && (
+														<span style={{ marginLeft: 4, fontSize: "0.9em" }}>
+															(TTFT: {(ttftMs / 1000).toFixed(1)}s)
+														</span>
+													)}
+												</span>
+											)}
 										</VSCodeBadge>
 									</div>
 									<span className={`codicon codicon-chevron-${isExpanded ? "up" : "down"}`}></span>

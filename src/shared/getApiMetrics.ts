@@ -6,6 +6,7 @@ interface ApiMetrics {
 	totalCacheWrites?: number
 	totalCacheReads?: number
 	totalCost: number
+	totalLatencyMs?: number
 }
 
 /**
@@ -13,17 +14,17 @@ interface ApiMetrics {
  *
  * This function processes 'api_req_started' messages that have been combined with their
  * corresponding 'api_req_finished' messages by the combineApiRequests function. It also takes into account 'deleted_api_reqs' messages, which are aggregated from deleted messages.
- * It extracts and sums up the tokensIn, tokensOut, cacheWrites, cacheReads, and cost from these messages.
+ * It extracts and sums up the tokensIn, tokensOut, cacheWrites, cacheReads, cost, and latency from these messages.
  *
  * @param messages - An array of ClineMessage objects to process.
- * @returns An ApiMetrics object containing totalTokensIn, totalTokensOut, totalCacheWrites, totalCacheReads, and totalCost.
+ * @returns An ApiMetrics object containing totalTokensIn, totalTokensOut, totalCacheWrites, totalCacheReads, totalCost, and totalLatencyMs.
  *
  * @example
  * const messages = [
- *   { type: "say", say: "api_req_started", text: '{"request":"GET /api/data","tokensIn":10,"tokensOut":20,"cost":0.005}', ts: 1000 }
+ *   { type: "say", say: "api_req_started", text: '{"request":"GET /api/data","tokensIn":10,"tokensOut":20,"cost":0.005,"latencyMs":1200}', ts: 1000 }
  * ];
- * const { totalTokensIn, totalTokensOut, totalCost } = getApiMetrics(messages);
- * // Result: { totalTokensIn: 10, totalTokensOut: 20, totalCost: 0.005 }
+ * const { totalTokensIn, totalTokensOut, totalCost, totalLatencyMs } = getApiMetrics(messages);
+ * // Result: { totalTokensIn: 10, totalTokensOut: 20, totalCost: 0.005, totalLatencyMs: 1200 }
  */
 export function getApiMetrics(messages: ClineMessage[]): ApiMetrics {
 	const result: ApiMetrics = {
@@ -32,13 +33,14 @@ export function getApiMetrics(messages: ClineMessage[]): ApiMetrics {
 		totalCacheWrites: undefined,
 		totalCacheReads: undefined,
 		totalCost: 0,
+		totalLatencyMs: undefined,
 	}
 
 	messages.forEach((message) => {
 		if (message.type === "say" && (message.say === "api_req_started" || message.say === "deleted_api_reqs") && message.text) {
 			try {
 				const parsedData = JSON.parse(message.text)
-				const { tokensIn, tokensOut, cacheWrites, cacheReads, cost } = parsedData
+				const { tokensIn, tokensOut, cacheWrites, cacheReads, cost, latencyMs } = parsedData
 
 				if (typeof tokensIn === "number") {
 					result.totalTokensIn += tokensIn
@@ -54,6 +56,9 @@ export function getApiMetrics(messages: ClineMessage[]): ApiMetrics {
 				}
 				if (typeof cost === "number") {
 					result.totalCost += cost
+				}
+				if (typeof latencyMs === "number") {
+					result.totalLatencyMs = (result.totalLatencyMs ?? 0) + latencyMs
 				}
 			} catch (error) {
 				console.error("Error parsing JSON:", error)
